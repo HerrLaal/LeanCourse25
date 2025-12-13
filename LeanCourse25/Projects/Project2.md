@@ -4,9 +4,9 @@
 
 Please fill out the following. Fill in the project topic once you have decided.
 ```
-First & last name:
-Project topic:
-Partner (optional):
+First & last name: Pascal Herbrich
+Project topic: Schur’s theorem and Ramsey Numbers
+Partner (optional): Fridolin Weisser
 ```
 
 ## Your own project
