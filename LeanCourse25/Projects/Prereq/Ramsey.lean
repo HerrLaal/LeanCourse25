@@ -14,7 +14,7 @@ import Mathlib.Data.Finite.Card
 import Mathlib.Data.Finset.Pairwise
 import Mathlib.Data.Sym.Card
 import Mathlib.Tactic.FinCases
-import ExponentialRamsey.Prereq.RamseyPrereq
+import LeanCourse25.Projects.Prereq.RamseyPrereq
 
 /-!
 # Ramsey numbers
