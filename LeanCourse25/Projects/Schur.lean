@@ -13,8 +13,8 @@ open Finset Setoid Nat SimpleGraph
 
 variable {α : Type*}
 
-/-lemma finset_set_fin_nat_partition_has_index (S : ℕ) (C : Finset (Set (Fin S))) :
-  IsPartition C.toSet → ∃ (ι : (C → Fin #C)), ι.Bijective := sorry-/
+lemma finset_set_fin_nat_partition_has_index (S : ℕ) (C : Finset (Set (Fin S))) :
+  IsPartition C.toSet → ∃ (ι : (Fin S → Fin #C)), ι.Bijective := by sorry
 
 theorem schur (c : ℕ) (hc : c > 0) :
   ∃ S, ∀ (C : Finset (Set (Fin S))),
@@ -26,10 +26,12 @@ theorem schur (c : ℕ) (hc : c > 0) :
   use N
   simp
   intro C PartC CardC
-  /-have index: ∃ (ι : (C → Fin #C)), ι.Bijective :=
-      by apply finset_set_fin_nat_partition_has_index (ramseyNumber n) C; apply PartC
-  obtain ⟨i, hi⟩ := index -/
-  let tel : (TopEdgeLabelling (Fin N) (Fin c)) := fun x ↦ sorry
+  have index: ∃ (ι : (Fin N → Fin c)), ι.Bijective :=
+      by rw[← CardC]; apply finset_set_fin_nat_partition_has_index N C; apply PartC
+  obtain ⟨i, hi⟩ := index
+  let tel : (TopEdgeLabelling (Fin N) (Fin c)) :=
+    fun x ↦ i (max (x.1.out.fst - x.1.out.snd) (x.1.out.snd - x.1.out.fst))
+    --TODO: maybe we can find an appropriate norm function
   specialize ramval tel
   obtain ⟨p, c1, elm, hp2⟩ := ramval
   have: #p ≥ 3 := by (have: n c1 ≥ 3 := by gcongr); gcongr
