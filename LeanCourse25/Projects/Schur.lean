@@ -28,9 +28,9 @@ theorem schur (c : ℕ) (hc : c > 0) :
   intro C PartC CardC
   have index: ∃ (ι : (Fin N → Fin c)), ι.Bijective :=
       by rw[← CardC]; apply finset_set_fin_nat_partition_has_index N C; apply PartC
-  obtain ⟨i, hi⟩ := index
+  obtain ⟨ι, hι⟩ := index
   let tel : (TopEdgeLabelling (Fin N) (Fin c)) :=
-    fun x ↦ i (max (x.1.out.fst - x.1.out.snd) (x.1.out.snd - x.1.out.fst))
+    fun x ↦ ι (max (x.1.out.fst - x.1.out.snd) (x.1.out.snd - x.1.out.fst))
     --TODO: maybe we can find an appropriate norm function
   specialize ramval tel
   obtain ⟨p, c1, elm, hp⟩ := ramval
@@ -38,19 +38,27 @@ theorem schur (c : ℕ) (hc : c > 0) :
   constructor
   · sorry
   · have : #p ≥ 3 := by gcongr
-    have : ∃ x ∈ p, ∃ y ∈ p, ∃ z ∈ p, x ≠ y ∧ y ≠ z ∧ x ≠ z := by sorry
-    obtain ⟨x, hx, y, hy, z, hz, hxy, hyz, hxz⟩ := this
-    use x --TODO: use a better structure than combining constructors
+    have : ∃ i ∈ p, ∃ j ∈ p, ∃ k ∈ p, i > j ∧ j > k ∧ i > k := by sorry
+    obtain ⟨i, hi, j, hj, k, hk, hij, hjk, hik⟩ := this
+    use i - j --TODO: use a better structure than combining constructors
     constructor
-    · exact hx
-    · use y
+    · simp
+      have elmij : tel ⟨s(i, j), (Ne.symm (Fin.ne_of_lt hij))⟩ = c1 := by
+          specialize elm hi hj (Ne.symm (Fin.ne_of_lt hij)); exact elm
+      have quoti: (Quot.out s(i, j)).1 = i := by sorry
+      have quotj: (Quot.out s(i, j)).2 = j := by sorry
+      have : ι (i - j) = c1 := by
+        rw[←elmij]
+        unfold tel
+        simp
+        rw[quoti, quotj]
+        rw [max_eq_left ?_]
+        sorry
+      sorry
+    · use j - k
       constructor
-      · exact hy
-      · have: z = x + y := by
-         simp at elm
-         have elmxy : EdgeLabelling.get tel x y hxy = c1 := by specialize elm hx hy hxy; exact elm
-         have elmyz : EdgeLabelling.get tel y z hyz = c1 := by specialize elm hy hz hyz; exact elm
-         have elmxz : EdgeLabelling.get tel x z hxz = c1 := by specialize elm hx hz hxz; exact elm
-         simp[tel] at elmxy elmyz elmxz
-         sorry
-        exact Set.mem_of_eq_of_mem (id (Eq.symm this)) hz
+      · sorry
+      · simp
+        have:  i - k = i - j + (j - k):= by sorry
+        rw[←this]
+        sorry
