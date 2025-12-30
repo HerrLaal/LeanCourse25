@@ -123,19 +123,10 @@ theorem schur (c : ℕ) (hc : c > 0) :
           exact indexself (j - k)
         rw [ijc, jkc]
       · have : NeZero N := by refine NeZero.of_pos (Fin.pos i)
-        have := Fin.addCommSemigroup
-        have : AddSemigroup (Fin N) := by exact (Fin.instAddRightCancelSemigroup N).toAddSemigroup
         have : i - j + (j - k) = i - k := by
-          calc -- TODO : maybe do it in a shorter way
-            i - j + (j - k) = ((i + (- j)) + (j - k)) := by rw [Fin.sub_eq_add_neg i j]
-            _ = (i + ((- j) + (j - k))) := by
-              rw [(Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc]
-            _ = (i + ((- j) + (j + (- k)))) := by rw [Fin.sub_eq_add_neg j k]
-            _ = (i + (((- j) + j) + (- k))) := by
-              rw [(Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc]
-            _ = (i + (0 + (- k))) := by rw [neg_add_cancel j]
-            _ = i + - k := by rw [Fin.zero_add (-k)]
-            _ = i - k := by rw [← Fin.sub_eq_add_neg i k]
+          rw [Fin.sub_eq_add_neg i j, (Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc,
+          Fin.sub_eq_add_neg j k,←(Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc (-j),
+          neg_add_cancel j, Fin.zero_add (-k), ← Fin.sub_eq_add_neg i k]
         rw [this]
         suffices (index (i - j)).val = (index (i - k)).val by
           rw [this]
