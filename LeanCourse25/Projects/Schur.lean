@@ -4,6 +4,7 @@ import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Order.Interval.Finset.Defs
 import Mathlib.Order.Interval.Set.Defs
 import Mathlib.Data.Setoid.Partition
+import Mathlib.Data.List.Sort
 import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Data.Finset.Defs
 import LeanCourse25.Projects.Prereq.Ramsey
@@ -19,9 +20,9 @@ open Finset Setoid Nat SimpleGraph
 
 variable {α : Type*}
 
-theorem schur (c : ℕ) (hc : c > 0) :
+theorem schur (c : ℕ) :
   ∃ S, ∀ (C : Finset (Set (Fin S))),
-  (IsPartition C.toSet ∧ #C = c) → ∃ a ∈ C, ∃ x ∈ a, ∃ y ∈ a, ∃ z ∈ a, x + y = z := by
+  (IsPartition C.toSet ∧ #C = c) → ∃ a ∈ C, ∃ x ∈ a, ∃ y ∈ a, ∃ z ∈ a, (x : ℕ) + ↑y = ↑z := by
   let n : (Fin c → ℕ) := fun _ ↦ 3
   let N := ramseyNumber n
   use N
@@ -85,7 +86,6 @@ theorem schur (c : ℕ) (hc : c > 0) :
       apply Finset.sort_sorted_gt
     refine ⟨?_, ?_, ?_⟩ <;> apply order <;> linarith
   obtain ⟨i, hi, j, hj, k, hk, hij, hjk, hik⟩ := this
-  use index (i - j)
 
 -- TODO: do it in a shorter way
 -- start
@@ -136,24 +136,9 @@ theorem schur (c : ℕ) (hc : c > 0) :
         exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (i - k))
 -- end
 
-  constructor
-  · exact coe_mem (index (i - j))
-  · use i - j
-    constructor
-    · exact indexself (i - j)
-    · use j - k
-      constructor
-      · suffices (index (i - j)).val = (index (j - k)).val by
-          rw [this]
-          exact indexself (j - k)
-        rw [ijc, jkc]
-      · have : NeZero N := by refine NeZero.of_pos (Fin.pos i)
-        have : i - j + (j - k) = i - k := by
-          rw [Fin.sub_eq_add_neg i j, (Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc,
-          Fin.sub_eq_add_neg j k,←(Fin.instAddRightCancelSemigroup N).toAddSemigroup.add_assoc (-j),
-          neg_add_cancel j, Fin.zero_add (-k), ← Fin.sub_eq_add_neg i k]
-        rw [this]
-        suffices (index (i - j)).val = (index (i - k)).val by
-          rw [this]
-          exact indexself (i - k)
-        rw [ijc, ikc]
+  refine ⟨index (i - j), by apply coe_mem, ?_⟩
+  refine ⟨(i - j), by apply indexself, ?_⟩
+  refine ⟨(j - k), by rw [ijc, ← jkc]; apply indexself, ?_⟩
+  refine ⟨(i - k), by rw [ijc, ← ikc]; apply indexself, ?_⟩
+  repeat rw [Fin.sub_val_of_le (by gcongr)]
+  refine Nat.sub_add_sub_cancel ?_ ?_ <;> apply le_of_succ_le <;> assumption
