@@ -56,8 +56,34 @@ theorem schur (c : ℕ) (hc : c > 0) :
   specialize ramval tel
   obtain ⟨p, c1, elm, hp⟩ := ramval
   have Cardp: #p ≥ 3 := by gcongr
-  have : ∃ i ∈ p, ∃ j ∈ p, ∃ k ∈ p, i > j ∧ j > k ∧ i > k := by
-      sorry
+  have : ∃ i ∈ p, ∃ j ∈ p, ∃ k ∈ p, j < i ∧ k < j ∧ k < i := by
+    let sorted_elems := (p.sort (· ≥ ·))
+    have : sorted_elems.length ≥ 3 := by
+      rw [Finset.length_sort]
+      exact Cardp
+    have : NeZero sorted_elems.length := by exact NeZero.of_gt this
+    let get_sorted (index : ℕ) : Fin N := sorted_elems.get (Fin.ofNat sorted_elems.length index)
+    let i := get_sorted 0
+    let j := get_sorted 1
+    let k := get_sorted 2
+    have mem_p (n : ℕ) : get_sorted n ∈ p := by
+      apply (mem_sort (· ≥ ·)).mp
+      apply List.get_mem
+    refine ⟨i, mem_p 0, ?_⟩
+    refine ⟨j, mem_p 1, ?_⟩
+    refine ⟨k, mem_p 2, ?_⟩
+    have order (i j : ℕ) (hij : i < j) (indices_in_bounds : j < sorted_elems.length) :
+      get_sorted i > get_sorted j := by
+      suffices StrictAnti sorted_elems.get by
+        apply this
+        apply Fin.lt_def.mpr
+        simp
+        rw [mod_eq_of_lt (by linarith), mod_eq_of_lt indices_in_bounds]
+        exact hij
+      refine List.sorted_gt_ofFn_iff.mp ?_
+      simp
+      apply Finset.sort_sorted_gt
+    refine ⟨?_, ?_, ?_⟩ <;> apply order <;> linarith
   obtain ⟨i, hi, j, hj, k, hk, hij, hjk, hik⟩ := this
   use index (i - j)
 
