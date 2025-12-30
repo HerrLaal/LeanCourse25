@@ -28,9 +28,15 @@ theorem schur (c : ℕ) (hc : c > 0) :
   simp
   intro C PartC CardC
   let q : (Fin N) → (Set (Fin N)) → Prop := fun x ↦ fun y ↦ x ∈ y
+  have dec (x : Fin N) : DecidablePred (q x) := by
+    have (y : Set (Fin N)): Fintype y := by exact Fintype.ofFinite ↑y
+    have : q = fun x y ↦ x ∈ y.toFinset := by
+      ext x y
+      exact Iff.symm Set.mem_toFinset
+    rw [this]
+    infer_instance
   let index : (Fin N → C) := by
     intro x
-    have dec : DecidablePred (q x) := by exact Classical.decPred (q x)
     let f : Set (Fin N) := by apply Finset.choose (q x) C (PartC.2 x)
     let prop : q x f := by apply Finset.choose_property
     use f
@@ -38,15 +44,8 @@ theorem schur (c : ℕ) (hc : c > 0) :
 
   have indexself: ∀ (x : Fin N), q x (index x) := by
     intro x
-    unfold index
-    simp
-    have dec : DecidablePred (q x) := by exact Classical.decPred (q x)
-    --apply Finset.choose_property
-    have prop : q x (Finset.choose (q x) C (PartC.2 x)) := by apply Finset.choose_property
-    unfold q at prop
-    --exact prop
-    sorry
-    --apply choose_property q C (PartC.2 x)
+    simp [index]
+    apply Finset.choose_property
 
   have Ctoc : C ≃ Fin c := by exact equivFinOfCardEq CardC
   have CtocCtocsymmid : Ctoc.symm ∘ Ctoc = id := by
