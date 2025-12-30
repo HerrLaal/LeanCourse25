@@ -1,25 +1,15 @@
-import Mathlib.Data.Nat.Basic
-import Mathlib.Data.Set.Defs
-import Mathlib.Order.Interval.Finset.Nat
-import Mathlib.Order.Interval.Finset.Defs
-import Mathlib.Order.Interval.Set.Defs
 import Mathlib.Data.Setoid.Partition
-import Mathlib.Data.List.Sort
-import Mathlib.SetTheory.Cardinal.Finite
-import Mathlib.Data.Finset.Defs
 import LeanCourse25.Projects.Prereq.Ramsey
-import Mathlib.Analysis.Calculus.ContDiff.FaaDiBruno
 import Mathlib.Data.Sym.Sym2.Order
-import Mathlib.Algebra.Group.Basic
-import Mathlib.Algebra.Group.Defs
-import Mathlib.Order.Fin.Basic
-
--- TODO : check which imports are necessary
 
 open Finset Setoid Nat SimpleGraph
 
 variable {α : Type*}
 
+/-- Given an Integer `c`, there exists an integer `S`, such that for all partitions of
+`\{0, ..., S - 1\}` into `c` parts, at least one of them contains integers x, y and z with
+`x + y = z`.
+-/
 theorem schur (c : ℕ) :
   ∃ S, ∀ (C : Finset (Set (Fin S))),
   (IsPartition C.toSet ∧ #C = c) → ∃ a ∈ C, ∃ x ∈ a, ∃ y ∈ a, ∃ z ∈ a, (x : ℕ) + ↑y = ↑z := by
