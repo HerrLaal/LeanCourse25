@@ -87,54 +87,24 @@ theorem schur (c : ℕ) :
     refine ⟨?_, ?_, ?_⟩ <;> apply order <;> linarith
   obtain ⟨i, hi, j, hj, k, hk, hij, hjk, hik⟩ := this
 
--- TODO: do it in a shorter way
--- start
-  have elmij : tel ⟨s(i, j), (Ne.symm (Fin.ne_of_lt hij))⟩ = c1 := by
-    specialize elm hi hj (Ne.symm (Fin.ne_of_lt hij)); exact elm
-  have elmjk : tel ⟨s(j, k), (Ne.symm (Fin.ne_of_lt hjk))⟩ = c1 := by
-    specialize elm hj hk (Ne.symm (Fin.ne_of_lt hjk)); exact elm
-  have elmik : tel ⟨s(i, k), (Ne.symm (Fin.ne_of_lt hik))⟩ = c1 := by
-    specialize elm hi hk (Ne.symm (Fin.ne_of_lt hik)); exact elm
-  have ijc1: Ctoc (index (i - j)) = c1 := by
-    rw[←elmij]
-    unfold tel
-    simp
+  have elim_to_c {i j} (hi : i ∈ p) (hj : j ∈ p) (hij : j < i) :
+    index (i - j) = Ctoc.symm c1 := by
+    have : tel ⟨s(i, j), (Ne.symm (Fin.ne_of_lt hij))⟩ = c1 := elm hi hj (Fin.ne_of_lt hij).symm
+    suffices Ctoc (index (i - j)) = c1 by
+      rw[← this]
+      calc
+        index (i - j) = id (index (i - j)) := by rfl
+        _ = (Ctoc.symm ∘ Ctoc) (index (i - j)) := by
+          exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (i - j))
+    rw [← this]
+    simp [tel]
     rw [max_eq_left ?_, min_eq_right ?_]
-    gcongr
-    gcongr
-  have jkc1: Ctoc (index (j - k)) = c1 := by
-    rw[←elmjk]
-    unfold tel
-    simp
-    rw [max_eq_left ?_, min_eq_right ?_]
-    gcongr
-    gcongr
-  have ikc1: Ctoc (index (i - k)) = c1 := by
-    rw[←elmik]
-    unfold tel
-    simp
-    rw [max_eq_left ?_, min_eq_right ?_]
-    gcongr
-    gcongr
-  have ijc: (index (i - j)) = Ctoc.symm c1 := by
-    rw[← ijc1]
-    calc
-      index (i - j) = id (index (i - j)) := by rfl
-      _ = (Ctoc.symm ∘ Ctoc) (index (i - j)) := by
-        exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (i - j))
-  have jkc: (index (j - k)) = Ctoc.symm c1 := by
-    rw[← jkc1]
-    calc
-      index (j - k) = id (index (j - k)) := by rfl
-      _ = (Ctoc.symm ∘ Ctoc) (index (j - k)) := by
-        exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (j - k))
-  have ikc: (index (i - k)) = Ctoc.symm c1 := by
-    rw[← ikc1]
-    calc
-      index (i - k) = id (index (i - k)) := by rfl
-      _ = (Ctoc.symm ∘ Ctoc) (index (i-k)) := by
-        exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (i - k))
--- end
+    · gcongr
+    · gcongr
+
+  have ijc := elim_to_c hi hj hij
+  have jkc := elim_to_c hj hk hjk
+  have ikc := elim_to_c hi hk hik
 
   refine ⟨index (i - j), by apply coe_mem, ?_⟩
   refine ⟨(i - j), by apply indexself, ?_⟩
