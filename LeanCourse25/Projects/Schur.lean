@@ -1,10 +1,8 @@
-import Mathlib.Data.Setoid.Partition
 import LeanCourse25.Projects.Prereq.Ramsey
+import Mathlib.Data.Setoid.Partition
 import Mathlib.Data.Sym.Sym2.Order
 
-open Finset Setoid Nat SimpleGraph
-
-variable {α : Type*}
+open Finset Nat Setoid SimpleGraph
 
 /-- Given an integer `c`, there exists an integer `S`, such that for all partitions of
 `\{0, ..., S - 1\}` into `c` parts, at least one of them contains integers `x`, `y` and `z` with
@@ -28,9 +26,7 @@ theorem schur (c : ℕ) :
     infer_instance
   let index : (Fin N → C) := by
     intro x
-    let f : Set (Fin N) := by apply Finset.choose (q x) C (PartC.2 x)
-    let prop : q x f := by apply Finset.choose_property
-    use f
+    use (Finset.choose (q x) C (PartC.2 x))
     exact choose_mem (q x) C (PartC.2 x)
 
   have indexself: ∀ (x : Fin N), q x (index x) := by
