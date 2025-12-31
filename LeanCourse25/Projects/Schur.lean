@@ -6,8 +6,8 @@ open Finset Setoid Nat SimpleGraph
 
 variable {α : Type*}
 
-/-- Given an Integer `c`, there exists an integer `S`, such that for all partitions of
-`\{0, ..., S - 1\}` into `c` parts, at least one of them contains integers x, y and z with
+/-- Given an integer `c`, there exists an integer `S`, such that for all partitions of
+`\{0, ..., S - 1\}` into `c` parts, at least one of them contains integers `x`, `y` and `z` with
 `x + y = z`.
 -/
 theorem schur (c : ℕ) :
