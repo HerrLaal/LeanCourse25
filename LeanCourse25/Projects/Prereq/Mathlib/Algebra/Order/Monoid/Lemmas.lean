@@ -26,5 +26,4 @@ theorem MulLECancellable.of_hMul_left {α : Type*} [LE α] [Semigroup α]
   intro x y h
   apply hab
   rw [mul_assoc, mul_assoc]
-  exact mul_le_mul_left' h a
-
+  exact mul_le_mul_right h a

@@ -48,9 +48,9 @@ theorem edgeSet_eq_empty_iff {G : SimpleGraph V} : G.edgeSet = ∅ ↔ G = ⊥ :
 -- theorem disjoint_edgeSet {G H : SimpleGraph V} :
 --     Disjoint G.edgeSet H.edgeSet ↔ Disjoint G H := by
 --   rw [Set.disjoint_iff_inter_eq_empty, disjoint_iff, ← edgeSet_inf, edgeSet_eq_empty_iff]
-
-theorem disjoint_left {G H : SimpleGraph V} : Disjoint G H ↔ ∀ x y, G.Adj x y → ¬H.Adj x y := by
-  simp only [← disjoint_edgeSet, Set.disjoint_left, Sym2.forall, mem_edgeSet]
+--
+-- theorem disjoint_left {G H : SimpleGraph V} : Disjoint G H ↔ ∀ x y, G.Adj x y → ¬H.Adj x y := by
+--   simp only [← disjoint_edgeSet, Set.disjoint_left, Sym2.forall, mem_edgeSet]
 
 @[simp]
 theorem adj_sup_iff {ι V : Type*} {s : Finset ι} {f : ι → SimpleGraph V} {x y : V} :
@@ -127,9 +127,9 @@ theorem neighborFinset_supr [DecidableEq V] {ι : Type*} {s : Finset ι} {f : ι
     {x : V} [∀ i, Fintype ((f i).neighborSet x)] [Fintype ((s.sup f).neighborSet x)] :
     (s.sup f).neighborFinset x = s.biUnion fun i => (f i).neighborFinset x := by ext y; simp
 
-@[simp]
-theorem coe_neighborFinset {G : SimpleGraph V} {x : V} [Fintype (G.neighborSet x)] :
-    (G.neighborFinset x : Set V) = G.neighborSet x := by rw [neighborFinset_def, Set.coe_toFinset]
+-- @[simp]
+-- theorem coe_neighborFinset {G : SimpleGraph V} {x : V} [Fintype (G.neighborSet x)] :
+--   (G.neighborFinset x : Set V) = G.neighborSet x := by rw [neighborFinset_def, Set.coe_toFinset]
 
 theorem neighborFinset_disjoint {G H : SimpleGraph V} {x : V} [Fintype (G.neighborSet x)]
     [Fintype (H.neighborSet x)] (h : Disjoint G H) :

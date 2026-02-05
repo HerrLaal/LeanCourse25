@@ -540,7 +540,7 @@ theorem IsRamseyValid.remove_twos {n : K → ℕ} (h : IsRamseyValid V n) :
   rw [Finset.one_lt_card_iff] at this
   obtain ⟨a, b, ha, hb, hab⟩ := this
   have : Subtype.val (C.get a b hab) = c := hm ha hb hab
-  refine ⟨m, _, ?_, hc.trans_eq' (congr_arg n this)⟩
+  refine ⟨m, _, ?_, hc.trans_eq' (congr_arg n this.symm)⟩
   rwa [← monochromaticOf_injective _ Subtype.val_injective, this]
 
 theorem IsRamseyValid.of_remove_twos {n : K → ℕ}
