@@ -373,7 +373,7 @@ theorem generalized_schur' (c k : ℕ) :
           _ < k * k ^ 2 := by gcongr
           _ = k ^ 3 := by ring
     obtain ⟨s, _, s_has_many_preimages⟩ := this
-    let multiple : Icc 1 k → Icc 1 S := by
+    let multiple_fn : Icc 1 k → Icc 1 S := by
       intro i
       refine ⟨i * s, ?_⟩
       simp
@@ -401,14 +401,14 @@ theorem generalized_schur' (c k : ℕ) :
           specialize hI hi
           simp at hI
           norm_cast
-    let multiple : Icc 1 k ↪ Icc 1 S := by
-      refine ⟨multiple, ?_⟩
-      intro i i'
-      simp [multiple]
-      intro h
-      obtain h|h := h
-      · assumption
-      · linarith [Icc_LB s]
+    let multiple : Icc 1 k ↪ Icc 1 S := {
+      toFun := multiple_fn
+      inj' i j h := by
+        simp [multiple_fn] at h
+        obtain h|h := h
+        · assumption
+        · linarith [Icc_LB s]
+    }
     let A : Finset (Icc 1 S) := { multiple i | i : Icc 1 k }
     use A
     constructor
