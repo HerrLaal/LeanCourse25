@@ -184,92 +184,137 @@ theorem schur (c : ℕ) :
   have : (i : ℕ) - j + (j - k) = i - k := by
     refine Nat.sub_add_sub_cancel ?_ ?_ <;> apply le_of_succ_le <;> assumption
   rw [this]
-  refine ⟨sub_bounds hik, ?_⟩
-  rw [ijc, ← ikc]
-  apply indexself
+  exact ⟨sub_bounds hik, by rw [ijc, ← ikc]; apply indexself⟩
 
 def nonempty_subset_sums {k N : ℕ} (a : Fin k → (Icc 1 N)) : Set ℕ :=
   (fun (s : Set (Fin k)) => ∑ k ∈ s, a k) '' { s | s.Nonempty }
 
+
+lemma nonempty_subset_sums_mono {k l N : ℕ} (emb_k_l : Fin k ↪ Fin l)
+  (a : Fin k → (Icc 1 N)) (a' : Fin l → (Icc 1 N)) (h_compat : a = a' ∘ emb_k_l) :
+  nonempty_subset_sums a ⊆ nonempty_subset_sums a' := by
+  intro sum hsum
+  rw [h_compat] at hsum
+  simp [nonempty_subset_sums] at hsum ⊢
+  obtain ⟨I, hI⟩ := hsum
+  use emb_k_l '' I
+  simp
+  exact hI
+
+lemma nonempty_subset_sums_mono' {k l N : ℕ} (hkl : k ≤ l) (a : Fin l → (Icc 1 N)) :
+  nonempty_subset_sums (fun (i : Fin k) => a (i.castLE hkl)) ⊆ nonempty_subset_sums a := by
+  let emb_k_l := Fin.castLEEmb hkl
+  apply nonempty_subset_sums_mono emb_k_l
+  exact List.ofFn_inj.mp rfl
+
 def coe_to_nat {N : ℕ} (a : Set (Icc 1 N)) : Set ℕ :=
   (fun (k : Icc 1 N) => k) '' a
+
+-- Alternative formulation of `schur` using `a : Fin 2 → Icc 1 S` instead of `x` and `y`, which
+-- corresponds more to the following formalization of the generalization.
+theorem schur' (c : ℕ) :
+  ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
+  → ∃ C₀ ∈ C, ∃ a : Fin 2 → Icc 1 S, nonempty_subset_sums a ⊆ coe_to_nat C₀ := by
+  obtain ⟨S, hSchur⟩ := schur c
+  use S
+  intro C hC
+  specialize hSchur C hC
+  obtain ⟨C₀, hC₀, h⟩ := hSchur
+  refine ⟨C₀, hC₀, ?_⟩
+  obtain ⟨x, hx, y, hy, z, hz, hxyz⟩ := h
+  let a (i : Fin 2) : Icc 1 S := match i with
+  | 0 => x
+  | 1 => y
+  use a
+  intro sum hsum
+  simp [nonempty_subset_sums] at hsum
+  obtain ⟨s, hs_nonempty, hs⟩ := hsum
+  subst sum
+
+  rw [← Fintype.sum_ite_mem s.toFinset, Fin.sum_univ_two]
+  simp [a]
+  suffices ∃ d ∈ C₀, ((if 0 ∈ s then (x : ℕ) else 0) + if 1 ∈ s then ↑y else 0) = ↑d by
+    obtain ⟨d, hd, d_equality⟩ := this
+    rw [d_equality]
+    simp [coe_to_nat]
+    exact hd
+  by_cases h₀ : 0 ∈ s <;> by_cases h₁ : 1 ∈ s
+  · refine ⟨z, hz, ?_⟩
+    simp [h₀, h₁]
+    exact hxyz
+  · refine ⟨x, hx, ?_⟩
+    simp [h₀, h₁]
+  · refine ⟨y, hy, ?_⟩
+    simp [h₀, h₁]
+  · obtain ⟨i, hi⟩ := hs_nonempty
+    match i with
+    | 0 | 1 => contradiction
 
 theorem generalized_schur (c k : ℕ) :
   ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
   → ∃ C₀ ∈ C, ∃ a : Fin k → Icc 1 S, nonempty_subset_sums a ⊆ coe_to_nat C₀ := by
-  match k with
-  | 0 =>
-    use 1
-    intro C hC
-    obtain ⟨C_is_partition, _⟩ := hC
-    obtain ⟨s, ⟨hs, _⟩, _⟩ := C_is_partition.2 ⟨1, by simp⟩
-    refine ⟨s, hs, ?_⟩
-    use fun (s : Fin 0) => ⟨1, by simp⟩
-    simp [nonempty_subset_sums, coe_to_nat]
-    apply Set.subset_empty_iff.mp
-    intro s hs
-    simp at hs
-    obtain ⟨i, _⟩ := hs
-    apply i.elim0
-  | 1 =>
-    use 1
-    intro C hC
-    obtain ⟨C_is_partition, _⟩ := hC
-    obtain ⟨s, ⟨hs, h_1_in_s⟩, _⟩ := C_is_partition.2 ⟨1, by simp⟩
-    refine ⟨s, hs, ?_⟩
-    use fun (_: Fin 1) => ⟨1, by simp⟩
-    unfold nonempty_subset_sums coe_to_nat
-    intro d hd
-    simp
-    obtain ⟨D, hD, hdD⟩ := hd
-    have : D = Set.univ := Subsingleton.eq_univ_of_nonempty hD
-    subst D
-    simp at hdD
-    subst d
-    simp
-    assumption
-  | 2 =>
-    obtain ⟨S, hSchur⟩ := schur c
+  match h : k with
+  | 0 | 1 => -- reduce to schur'
+    obtain ⟨S, hS⟩ := schur' c
     use S
     intro C hC
-    specialize hSchur C hC
-    obtain ⟨C₀, hC₀, h⟩ := hSchur
-    refine ⟨C₀, hC₀, ?_⟩
-    obtain ⟨x, hx, y, hy, z, hz, hxyz⟩ := h
-    let a (i : Fin 2) : Icc 1 S := match i with
-    | 0 => x
-    | 1 => y
-    use a
+    obtain ⟨C₀, C₀_in_C, ⟨a, ha⟩⟩ := hS C hC
+    refine ⟨C₀, C₀_in_C, ?_⟩
+    use (fun i => a (i.castLE (by linarith)))
     intro sum hsum
-    simp [nonempty_subset_sums] at hsum
-    obtain ⟨s, hs_nonempty, hs⟩ := hsum
-    subst sum
-
-    rw [← Fintype.sum_ite_mem s.toFinset, Fin.sum_univ_two]
-    simp [a]
-    suffices ∃ d ∈ C₀, ((if 0 ∈ s then (x : ℕ) else 0) + if 1 ∈ s then ↑y else 0) = ↑d by
-      obtain ⟨d, hd, d_equality⟩ := this
-      rw [d_equality]
-      simp [coe_to_nat]
-      exact hd
-    by_cases h₀ : 0 ∈ s <;> by_cases h₁ : 1 ∈ s
-    · refine ⟨z, hz, ?_⟩
-      simp [h₀, h₁]
-      exact hxyz
-    · refine ⟨x, hx, ?_⟩
-      simp [h₀, h₁]
-    · refine ⟨y, hy, ?_⟩
-      simp [h₀, h₁]
-    · obtain ⟨i, hi⟩ := hs_nonempty
-      match i with
-      | 0 => contradiction
-      | 1 => contradiction
+    apply ha
+    apply nonempty_subset_sums_mono' (by linarith) a
+    subst h
+    exact hsum
+  | 2 => -- this is schur'
+    exact schur' c
   | succ n' =>
     have := generalized_schur c n'
     sorry
 
 def nonempty_subset_sums' {N : ℕ} (A : Finset (Icc 1 N)) : Set ℕ :=
   (fun (s : Finset (Icc 1 N)) => ∑ k ∈ s, k) '' { s | s ⊆ A ∧ s.Nonempty }
+
+lemma nonempty_subset_sums_def_eq {N : ℕ} (A : Finset (Icc 1 N)) :
+  nonempty_subset_sums' A = nonempty_subset_sums (fun i : Fin #A => (A.equivFin.symm i).val) := by
+  let to_index {A' : Finset (Icc 1 N)} (hA' : A' ⊆ A) (a : Icc 1 N) (ha : a ∈ A') : Fin #A :=
+    (A.equivFin ⟨a, hA' ha⟩)
+  let to_element (i : Fin #A) : Icc 1 N := (A.equivFin.symm i).val
+  ext sum
+  simp [nonempty_subset_sums, nonempty_subset_sums']
+  constructor <;> intro hsum
+  · obtain ⟨summands, ⟨summands_subset_A, summands_Nonempty⟩, hsummands⟩ := hsum
+    let to_index₀ := to_index summands_subset_A
+    let I := (fun (a : summands) => to_index₀ a.val a.prop) '' Set.univ (α := summands)
+    use I
+    constructor
+    · -- I is nonempty
+      rw [Set.image_nonempty, ← Set.nonempty_iff_univ_nonempty]
+      exact Nonempty.to_subtype summands_Nonempty
+    · -- the sums are equal
+      rw [← hsummands]
+      apply Finset.sum_bij' (fun i _ => (A.equivFin.symm i).val) -- i
+                            (fun a ha => A.equivFin ⟨a, summands_subset_A ha⟩) -- j
+      <;> try {simp; done}
+      · intro s hs
+        simp [I, to_index, to_index₀]
+        exact hs
+      · intro i hi
+        simp only [Set.image_univ, Set.toFinset_range, univ_eq_attach, mem_image, mem_attach,
+          true_and, I, to_index, to_index₀] at hi
+        obtain ⟨s, @subst⟩ := hi
+        simp
+  · obtain ⟨I, I_Nonempty, hI⟩ := hsum
+    let A' := (to_element '' I).toFinset
+    use A'
+    refine ⟨⟨?_, ?_⟩, ?_⟩ <;> simp [A']
+    · intro a ha
+      simp at ha
+      obtain ⟨i, hi, @subst⟩ := ha
+      simp [to_element]
+    · exact I_Nonempty
+    · simp [to_element]
+      exact hI
 
 -- This is a corollary from the generalized version of Schur's theorem, stating that the chosen
 -- elements `a i` can be assumed to be distinict.
@@ -291,59 +336,32 @@ theorem generalized_schur' (c k : ℕ) :
     suffices nonempty_subset_sums' A' ⊆ nonempty_subset_sums a by
       intro x hx
       exact ha (this hx)
-    intro sum hsum
-    simp [nonempty_subset_sums]
-    obtain ⟨summands, ⟨summands_subset_A', summands_nonempty⟩, hsummands⟩ := hsum
-    have ⟨default_summand, hdefault_summand⟩ := summands_nonempty
-
-    have summands_have_preimage {s : Icc 1 S} (hs : s ∈ summands) : ∃ i, a i = s := by
-      suffices s ∈ image a univ by
-        simp at this
-        exact this
+    rw [nonempty_subset_sums_def_eq A']
+    suffices ∃ emb : Fin #A' ↪ Fin (k ^ 3), (fun i ↦ ↑(A'.equivFin.symm i)) = a ∘ emb by
+      obtain ⟨emb, hemb⟩ := this
+      apply nonempty_subset_sums_mono emb
+      exact hemb
+    subst k
+    have have_preimages (s : Fin #A') : ↑(A'.equivFin.symm s) ∈ A := by
       apply hA'
-      apply summands_subset_A'
-      exact hs
-
-    let indices : Icc 1 S → Fin (k ^ 3) := by
+      simp
+    simp [A] at have_preimages
+    let emb_fn : Fin #A' → Fin (#A' ^ 3) := by
       intro s
-      let s' := if s ∈ summands then s else default_summand
-      have : s' ∈ summands := by
-        by_cases h : s ∈ summands
-        · simp [s', h]
-        · simp [s', h]
-          exact hdefault_summand
-      exact Fin.find (a · = s') (summands_have_preimage this)
-    have indices_prop : ∀ s ∈ summands, a (indices s) = s := by
-      intro s hs
-      simp [indices, hs]
-      exact Fin.find_spec (summands_have_preimage hs)
-    use (indices '' summands)
-    constructor <;> simp
-    · exact summands_nonempty
-    · calc ∑ k ∈ image indices summands, (a k : ℕ)
-        _ = ∑ s ∈ summands, ↑s := ?_
-        _ = sum := by simp_rw [hsummands]
-      apply Finset.sum_bij (fun i _ => a i)
-      · -- well-definedness: a (indices (summands)) ⊆ summands
-        intro i hi
-        rw [mem_image] at hi
-        obtain ⟨a', ha', index_of_a'⟩ := hi
-        subst i
-        rw [indices_prop a' ha']
-        exact ha'
-      · -- injectivity
-        intro i₁ hi₁ i₂ hi₂ hi₁i₂
-        rw [mem_image] at hi₁ hi₂
-        obtain ⟨a₁, ha₁, @subst⟩ := hi₁
-        obtain ⟨a₂, ha₂, @subst⟩ := hi₂
-        rw [indices_prop a₁ ha₁, indices_prop a₂ ha₂] at hi₁i₂
-        rw [hi₁i₂]
-      · -- surjectivity
-        intro s hs
-        refine ⟨indices s, mem_image_of_mem indices hs, ?_⟩
-        exact indices_prop s hs
-      · -- trivial equality of summands
-        exact fun _ _ => rfl
+      exact Fin.find (a · = (A'.equivFin.symm s)) (have_preimages s)
+    have emb_compat : (fun i ↦ ↑(A'.equivFin.symm i)) = a ∘ emb_fn := by
+      ext i
+      simp [emb_fn]
+      rw [Fin.find_spec (have_preimages i)]
+    let emb : Fin #A' ↪ Fin (#A' ^ 3) := {
+      toFun := emb_fn
+      inj' := by
+        apply Function.Injective.of_comp (f := a)
+        rw [← emb_compat]
+        simp [Function.Injective]
+    }
+    use emb
+    exact emb_compat
   · -- case 2: too many a i are the same element s, we can use i*s for i ∈ Icc 1 k
     simp at h
     have k_pos : 0 < k := zero_lt_of_lt h
