@@ -20,6 +20,15 @@ noncomputable instance (a : α) : DecidablePred (fun (y : Set α) => a ∈ y) :=
 
 end Finiteness
 
+namespace Finset
+
+variable {α : Type*}
+
+@[reducible]
+def IsPartitionOfCard (a : Finset (Set α)) (k : ℕ) := IsPartition (SetLike.coe a) ∧ #a = k
+
+end Finset
+
 section Icc
 
 lemma Icc_bds {a b : ℕ} (t : Icc a b) : a ≤ t ∧ t ≤ b := mem_Icc.mp t.prop
@@ -70,7 +79,7 @@ end Sym2
 `x + y = z`.
 -/
 theorem schur (c : ℕ) :
-  ∃ S, ∀ (C : Finset (Set (Icc 1 S))), (IsPartition (SetLike.coe C) ∧ #C = c)
+  ∃ S, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
   → ∃ a ∈ C, ∃ x ∈ a, ∃ y ∈ a, ∃ z ∈ a, (x : ℕ) + ↑y = ↑z := by
   let n : (Fin c → ℕ) := fun _ ↦ 3
   let N := ramseyNumber n
@@ -186,7 +195,7 @@ def coe_to_nat {N : ℕ} (a : Set (Icc 1 N)) : Set ℕ :=
   (fun (k : Icc 1 N) => k) '' a
 
 theorem generalized_schur (c k : ℕ) :
-  ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), (IsPartition (SetLike.coe C) ∧ #C = c)
+  ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
   → ∃ C₀ ∈ C, ∃ a : Fin k → Icc 1 S, nonempty_subset_sums a ⊆ coe_to_nat C₀ := by
   match k with
   | 0 =>
@@ -265,7 +274,7 @@ def nonempty_subset_sums' {N : ℕ} (A : Finset (Icc 1 N)) : Set ℕ :=
 -- This is a corollary from the generalized version of Schur's theorem, stating that the chosen
 -- elements `a i` can be assumed to be distinict.
 theorem generalized_schur' (c k : ℕ) :
-  ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), (IsPartition (SetLike.coe C) ∧ #C = c)
+  ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
   → ∃ C₀ ∈ C, ∃ A : Finset (Icc 1 S), #A = k ∧ nonempty_subset_sums' A ⊆ coe_to_nat C₀ := by
   have reduction := generalized_schur c (k ^ 4)
   obtain ⟨S, hS⟩ := reduction
