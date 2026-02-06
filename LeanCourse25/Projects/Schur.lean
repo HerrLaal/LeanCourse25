@@ -270,7 +270,7 @@ theorem generalized_schur (c k : ℕ) :
     apply nonempty_subset_sums_mono' (by linarith) a
     subst h
     exact hsum
-  | 2 => -- this is schur'
+  | 2 =>
     exact schur' c
   | n' + 1 =>
     sorry
