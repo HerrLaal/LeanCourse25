@@ -25,11 +25,13 @@ namespace Finset
 variable {α : Type*}
 
 @[reducible]
+-- A simple definitional alias, which we use multiple times.
 def IsPartitionOfCard (a : Finset (Set α)) (k : ℕ) := IsPartition (SetLike.coe a) ∧ #a = k
 
 end Finset
 
 section Icc
+/- A couple of Icc lemmas that we use countless times. -/
 
 lemma Icc_bds {a b : ℕ} (t : Icc a b) : a ≤ t ∧ t ≤ b := mem_Icc.mp t.prop
 
@@ -37,11 +39,13 @@ lemma Icc_LB {a b : ℕ} (t : Icc a b) : a ≤ t := (Icc_bds t).1
 
 lemma Icc_UB {a b : ℕ} (t : Icc a b) : t ≤ b := (Icc_bds t).2
 
-lemma icc_diff_bounds {N : ℕ} {i j : Icc 1 N} (hij : i > j) : (i : ℕ) - j ∈ Icc 1 N := by
+lemma Icc_diff_bounds {N : ℕ} {i j : Icc 1 N} (hij : i > j) : (i : ℕ) - j ∈ Icc 1 N := by
   simp
   constructor
   · exact Nat.le_sub_of_add_le' hij
   · linarith [Icc_UB i]
+
+def Icc_sub {N : ℕ} {s t : Icc 1 N} (hst : t < s) : Icc 1 N := ⟨(s : ℕ) - t, Icc_diff_bounds hst⟩
 
 end Icc
 
@@ -74,6 +78,23 @@ lemma sym2_other_of_inf (a : Sym2 α) : Sym2.Mem.other' (sym2_sup_mem a) = a.inf
 
 end Sym2
 
+def edge_diff {N : ℕ} {G : SimpleGraph (Icc 1 N)} (x : G.edgeSet) : Icc 1 N := by
+  let diff := (x.1.sup : ℕ) - x.1.inf
+  refine ⟨diff, ?_⟩
+  refine mem_Icc.mpr ?_
+  constructor
+  · have : x.1.inf < x.1.sup := by
+      refine lt_of_le_of_ne x.1.inf_le_sup ?_
+      have : ¬x.1.IsDiag := by
+        apply SimpleGraph.not_isDiag_of_mem_edgeSet G
+        exact Subtype.coe_prop x
+      have := x.1.other_ne this (sym2_sup_mem x.1)
+      rw [Sym2.other_eq_other'] at this
+      rw [sym2_other_of_inf] at this
+      assumption
+    apply Nat.le_sub_of_add_le' this
+  · apply sym2_of_icc_diff_le
+
 /-- Given an integer `c`, there exists an integer `S`, such that for all partitions of
 `\{1, ..., S\}` into `c` parts, at least one of them contains integers `x`, `y` and `z` with
 `x + y = z`.
@@ -100,23 +121,7 @@ theorem schur (c : ℕ) :
   have Ctoc : C ≃ Fin c := by exact equivFinOfCardEq CardC
   have CtocCtocsymmid : Ctoc.symm ∘ Ctoc = id := by
     exact Equiv.symm_comp_self Ctoc
-  let edge_to_label {G : SimpleGraph (Icc 1 N)} (x : G.edgeSet) : Icc 1 N := by
-    let diff := (x.1.sup : ℕ) - x.1.inf
-    refine ⟨diff, ?_⟩
-    refine mem_Icc.mpr ?_
-    constructor
-    · have : x.1.inf < x.1.sup := by
-        refine lt_of_le_of_ne x.1.inf_le_sup ?_
-        have : ¬x.1.IsDiag := by
-          apply SimpleGraph.not_isDiag_of_mem_edgeSet G
-          exact Subtype.coe_prop x
-        have := x.1.other_ne this (sym2_sup_mem x.1)
-        rw [Sym2.other_eq_other'] at this
-        rw [sym2_other_of_inf] at this
-        assumption
-      apply Nat.le_sub_of_add_le' this
-    · apply sym2_of_icc_diff_le
-  let tel : (TopEdgeLabelling (Icc 1 N) (Fin c)) := fun x ↦ Ctoc (index (edge_to_label x))
+  let tel : (TopEdgeLabelling (Icc 1 N) (Fin c)) := fun x ↦ Ctoc (index (edge_diff x))
   have ramsey_spec : ∀ D : TopEdgeLabelling (Icc 1 N) (Fin c), ∃ (p : Finset (Icc 1 N)) (color : _),
     D.MonochromaticOf p color ∧ n color ≤ p.card := by
     apply ramseyNumber_spec
@@ -153,18 +158,17 @@ theorem schur (c : ℕ) :
     refine ⟨?_, ?_, ?_⟩ <;> apply order <;> linarith
   obtain ⟨i, hi, j, hj, k, hk, hij, hjk, hik⟩ := this
 
-  let icc_sub {i j : Icc 1 N} (hij : j < i) : Icc 1 N := ⟨i - j, icc_diff_bounds hij⟩
   have elim_to_c {i j} (hi : i ∈ p) (hj : j ∈ p) (hij : j < i) :
-    index (icc_sub hij) = Ctoc.symm c1 := by
+    index (Icc_sub hij) = Ctoc.symm c1 := by
     have : tel ⟨s(i, j), (Ne.symm (_root_.ne_of_lt hij))⟩ = c1 := elm hi hj (_root_.ne_of_gt hij)
-    suffices Ctoc (index (icc_sub hij)) = c1 by
+    suffices Ctoc (index (Icc_sub hij)) = c1 by
       rw [← this]
       calc
-        index (icc_sub hij) = id (index (icc_sub hij)) := by rfl
-        _ = (Ctoc.symm ∘ Ctoc) (index (icc_sub hij)) := by
-          exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (icc_sub hij))
+        index (Icc_sub hij) = id (index (Icc_sub hij)) := by rfl
+        _ = (Ctoc.symm ∘ Ctoc) (index (Icc_sub hij)) := by
+          exact congrFun (id (Eq.symm CtocCtocsymmid)) (index (Icc_sub hij))
     rw [← this]
-    simp [tel, icc_sub, edge_to_label]
+    simp [tel, Icc_sub, edge_diff]
     congr <;> symm
     · exact max_eq_left_of_lt hij
     · exact min_eq_right_of_lt hij
@@ -174,11 +178,11 @@ theorem schur (c : ℕ) :
   have ikc := elim_to_c hi hk hik
 
   have sub_bounds {i j : Icc 1 N} (hij : j < i) : 1 ≤ (i : ℕ) - j ∧ i - j ≤ N := by
-    have := icc_diff_bounds hij
+    have := Icc_diff_bounds hij
     simp at ⊢ this
     assumption
 
-  refine ⟨index (icc_sub hij), by apply coe_mem, ?_⟩
+  refine ⟨index (Icc_sub hij), by apply coe_mem, ?_⟩
   refine ⟨(i - j), sub_bounds hij, by apply indexself, ?_⟩
   refine ⟨(j - k), sub_bounds hjk, by rw [ijc, ← jkc]; apply indexself, ?_⟩
   have : (i : ℕ) - j + (j - k) = i - k := by
@@ -268,8 +272,7 @@ theorem generalized_schur (c k : ℕ) :
     exact hsum
   | 2 => -- this is schur'
     exact schur' c
-  | succ n' =>
-    have := generalized_schur c n'
+  | n' + 1 =>
     sorry
 
 def nonempty_subset_sums' {N : ℕ} (A : Finset (Icc 1 N)) : Set ℕ :=
