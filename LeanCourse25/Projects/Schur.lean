@@ -428,7 +428,16 @@ theorem generalized_schur' (c k : ℕ) :
         unfold i
         have multiple_spec (j : Icc 1 k) : (j : ℕ) * s = multiple j := by norm_cast
         rw [sum_mul, sum_congr rfl (fun j _ => multiple_spec j)]
-        have B_eq_image_of_multiple : B = Finset.map multiple I.toFinset := by sorry
+        have B_eq_image_of_multiple : B = Finset.map multiple I.toFinset := by
+          ext b
+          constructor <;> intro hb
+          · obtain ⟨i, hi⟩ := multiple_inv hb
+            simp only [mem_map, Set.mem_toFinset]
+            have i_mem_I : i ∈ I := by simp [I, hi, hb]
+            exact ⟨i, i_mem_I, hi⟩
+          · simp only [mem_map, Set.mem_toFinset] at hb
+            obtain ⟨i, i_mem_I, @subst⟩ := hb
+            exact mem_def.mpr i_mem_I
         rw [B_eq_image_of_multiple]
         exact Eq.symm (sum_map I.toFinset multiple Subtype.val)
       obtain ⟨i, i_mem_Icc, hi⟩ := this
