@@ -6,7 +6,7 @@ import Mathlib.Combinatorics.SimpleGraph.Basic
 
 open Finset Nat Setoid SimpleGraph
 
-section Finiteness
+section Decidability
 
 variable {α : Type*} [Finite α] [DecidableEq α]
 
@@ -18,7 +18,7 @@ noncomputable instance (a : α) : DecidablePred (fun (y : Set α) => a ∈ y) :=
   rw [this]
   infer_instance
 
-end Finiteness
+end Decidability
 
 namespace Finset
 
@@ -276,7 +276,7 @@ def nonempty_subset_sums' {N : ℕ} (A : Finset (Icc 1 N)) : Set ℕ :=
 theorem generalized_schur' (c k : ℕ) :
   ∃ S : ℕ, ∀ (C : Finset (Set (Icc 1 S))), C.IsPartitionOfCard c
   → ∃ C₀ ∈ C, ∃ A : Finset (Icc 1 S), #A = k ∧ nonempty_subset_sums' A ⊆ coe_to_nat C₀ := by
-  have reduction := generalized_schur c (k ^ 4)
+  have reduction := generalized_schur c (k ^ 3)
   obtain ⟨S, hS⟩ := reduction
   use S
   intro C hC
@@ -284,10 +284,9 @@ theorem generalized_schur' (c k : ℕ) :
   obtain ⟨C₀, hC₀, a, ha⟩ := hS
   refine ⟨C₀, hC₀, ?_⟩
   let A := image a Finset.univ
-  by_cases h : k ^ 2 ≤ #A
+  by_cases h : k ≤ #A
   · -- case 1: there are already at least k different a i, so we just use them
-    have : k ≤ #A := by nlinarith
-    obtain ⟨A', hA', card_of_A'⟩ := Finset.exists_subset_card_eq this
+    obtain ⟨A', hA', card_of_A'⟩ := Finset.exists_subset_card_eq h
     refine ⟨A', card_of_A', ?_⟩
     suffices nonempty_subset_sums' A' ⊆ nonempty_subset_sums a by
       intro x hx
@@ -305,7 +304,7 @@ theorem generalized_schur' (c k : ℕ) :
       apply summands_subset_A'
       exact hs
 
-    let indices : Icc 1 S → Fin (k ^ 4) := by
+    let indices : Icc 1 S → Fin (k ^ 3) := by
       intro s
       let s' := if s ∈ summands then s else default_summand
       have : s' ∈ summands := by
@@ -347,14 +346,14 @@ theorem generalized_schur' (c k : ℕ) :
         exact fun _ _ => rfl
   · -- case 2: too many a i are the same element s, we can use i*s for i ∈ Icc 1 k
     simp at h
-    have k_pos : 0 < k := Nat.pos_of_lt_mul_left h
-    have : ∃ s ∈ A, k ^ 2 < ↑{ i ∈ univ (α := Fin (k ^ 4)) | a i = s}.card := by
+    have k_pos : 0 < k := zero_lt_of_lt h
+    have : ∃ s ∈ A, k ^ 2 < ↑{ i ∈ univ (α := Fin (k ^ 3)) | a i = s}.card := by
       apply exists_lt_card_fiber_of_nsmul_lt_card_of_maps_to (M := ℕ)
       · simp [A]
       · simp
         calc #A * k ^ 2
-          _ < k ^ 2 * k ^ 2 := by gcongr
-          _ = k ^ 4 := by ring
+          _ < k * k ^ 2 := by gcongr
+          _ = k ^ 3 := by ring
     obtain ⟨s, _, s_has_many_preimages⟩ := this
     let multiple : Icc 1 k → Icc 1 S := by
       intro i
