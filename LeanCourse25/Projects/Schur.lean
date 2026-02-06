@@ -20,20 +20,27 @@ noncomputable instance (a : α) : DecidablePred (fun (y : Set α) => a ∈ y) :=
 
 end Finiteness
 
-section Sym2
+section Icc
+
+lemma Icc_bds {a b : ℕ} (t : Icc a b) : a ≤ t ∧ t ≤ b := mem_Icc.mp t.prop
+
+lemma Icc_LB {a b : ℕ} (t : Icc a b) : a ≤ t := (Icc_bds t).1
+
+lemma Icc_UB {a b : ℕ} (t : Icc a b) : t ≤ b := (Icc_bds t).2
 
 lemma icc_diff_bounds {N : ℕ} {i j : Icc 1 N} (hij : i > j) : (i : ℕ) - j ∈ Icc 1 N := by
   simp
   constructor
   · exact Nat.le_sub_of_add_le' hij
-  · have : i ≤ N := (mem_Icc.mp i.prop).2
-    linarith
+  · linarith [Icc_UB i]
+
+end Icc
+
+section Sym2
 
 lemma sym2_of_icc_diff_le {N : ℕ} (a : Sym2 (Icc 1 N)) : (a.sup : ℕ) - (a.inf : ℕ) ≤ N := by
-  have : a.sup ≤ N := (mem_Icc.mp a.sup.prop).2
-  have : a.inf ≥ (1 : ℕ) := (mem_Icc.mp a.inf.prop).1
   refine sub_le_of_le_add ?_
-  linarith
+  linarith [Icc_LB a.inf, Icc_UB a.sup]
 
 variable {α : Type*} [LinearOrder α]
 
@@ -45,7 +52,7 @@ lemma sym2_sup_mem (a : Sym2 α) : a.sup ∈ a := by
   rw [sym2_mk_inf_sup a]
   simp
   right
-  apply Sym2.inf_le_sup
+  exact Sym2.inf_le_sup a
 
 lemma sym2_other_of_inf (a : Sym2 α) : Sym2.Mem.other' (sym2_sup_mem a) = a.inf := by
   have := Sym2.other_spec' (sym2_sup_mem a)
@@ -57,16 +64,6 @@ lemma sym2_other_of_inf (a : Sym2 α) : Sym2.Mem.other' (sym2_sup_mem a) = a.inf
   · exact h.2
 
 end Sym2
-
-section Icc
-
-lemma Icc_bds {a b : ℕ} (t : Icc a b) : a ≤ t ∧ t ≤ b := mem_Icc.mp t.prop
-
-lemma Icc_LB {a b : ℕ} (t : Icc a b) : a ≤ t := (Icc_bds t).1
-
-lemma Icc_UB {a b : ℕ} (t : Icc a b) : t ≤ b := (Icc_bds t).2
-
-end Icc
 
 /-- Given an integer `c`, there exists an integer `S`, such that for all partitions of
 `\{1, ..., S\}` into `c` parts, at least one of them contains integers `x`, `y` and `z` with
